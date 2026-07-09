@@ -1,0 +1,21 @@
+# Ambiente virtual
+Controlador/
+.venv/
+venv/
+
+# Banco de dados SQLite
+Leads.db
+*.db
+
+# Arquivos Python compilados e cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Variáveis de ambiente
+.env
+.env.*
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
