@@ -1,6 +1,11 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 import sqlite3
+from openpyxl import Workbook
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment, numbers
 
 html = """
 <!DOCTYPE html>
@@ -54,7 +59,7 @@ html = """
 
     <div>
     <label for="telefone">Telefone</label>
-    <input name="numero" type="tel" id="numero" required>
+    <input name="telefone" type="tel" id="telefone" required>
     <br><br>
     </div>
 
@@ -92,12 +97,6 @@ html = """
     </div>
 
     <div>
-    <label for="carteira">Carteira</label>
-    <input name="carteira" type="text" id="carteira" required>
-    <br><br>
-    </div>
-
-    <div>
     <label for="agendamento">Data De Agendamento</label>
     <input name="agendamento" type="date" id="agendamento" required>
     <br><br>
@@ -117,7 +116,9 @@ html = """
 
     <div>
     <button type="submit">Enviar</button>
+    <a href="/exportar"><button type="button">Exportar Excel</button></a>
     </div>
+
 </form>
 </body>
 </html>
@@ -127,8 +128,8 @@ conn = sqlite3.connect("Leads.db")
 
 conn.execute("""CREATE TABLE IF NOT EXISTS agendamentos (
              id INTEGER PRIMARY KEY AUTOINCREMENT,
-             data_agendamento TEXT,
-             data_visita TEXT,
+             agendamento TEXT,
+             visita TEXT,
              horario TEXT,
              empresa TEXT,
              contato TEXT,
@@ -137,24 +138,132 @@ conn.execute("""CREATE TABLE IF NOT EXISTS agendamentos (
              congenere TEXT,
              hotphone TEXT,
              status TEXT,
-             carteira TEXT,
              observacao TEXT,
+             analista TEXT, 
+             consultora TEXT,
+             telefone TEXT,
              criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 
 app = FastAPI()
+
+
+def formatar_planilha(ws):
+
+    from openpyxl.worksheet.table import Table, TableStyleInfo
+    from openpyxl.styles import Alignment
+    from datetime import datetime
+
+    tab = Table(displayName="Agendamentos", ref=ws.dimensions)
+
+    style = TableStyleInfo(
+        name="TableStyleMedium7",
+        showRowStripes=True,
+    )
+
+    tab.tableStyleInfo = style
+    ws.add_table(tab)
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    for column in ws.columns:
+        max_length = 0
+        column_letter = get_column_letter(column[0].column)
+        for cell in column:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+            ws.column_dimensions[column_letter].width = min(max_length + 4, 40)
+
+    ws.freeze_panes = "A2"
+
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        for cell in row:
+            if isinstance(cell.value, str) and len(cell.value) >= 10:
+                try:
+                    dt = datetime.strptime(cell.value[:10], "%Y-%m-%d")
+                    cell.value = dt
+                    cell.number_format = "DD/MM/YYYY"
+                except (ValueError, TypeError):
+                    pass
 
 @app.get("/")
 def main():
     return HTMLResponse(content=html)
 
 @app.post("/enviar")
-def receber_dados(nome: str = Form(...)):
-    return print("dados recebidos e registrados!")
+def receber_dados(
+    agendamento: str = Form(...),
+    visita: str = Form(...),
+    horario: str = Form(...),
+    empresa: str = Form(...),
+    contato: str = Form(...),
+    email: str = Form(...),
+    vidas: int = Form(...),
+    congenere: str = Form(...),
+    hotphone: str = Form(...),
+    status: str = Form(...),
+    observacao: str = Form(...),
+    analista: str = Form(...),
+    consultora: str = Form(...),
+    telefone: str = Form(...)):
 
+    conn = sqlite3.connect("Leads.db")
 
+    conn.execute("""INSERT INTO agendamentos (
+                 agendamento,
+                 visita,
+                 horario,
+                 empresa,
+                 contato,
+                 email,
+                 vidas,
+                 congenere,
+                 hotphone,
+                 status,
+                 observacao,
+                 analista,
+                 consultora,
+                 telefone)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """, (agendamento, visita, horario, empresa, contato, email, vidas, congenere, hotphone, status, observacao, analista, consultora, telefone))
+    
+    conn.commit()
+    conn.close()
+    return HTMLResponse(content="<h2>Dados enviados com sucesso!</h2><a href='/'>Novo registro</a>")
 
+@app.get("/exportar")
+def exportar():
+    conn = sqlite3.connect("Leads.db")
+    rows = conn.execute("SELECT * FROM agendamentos").fetchall()
+    conn.close()
+
+    output = BytesIO()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Agendamentos"
+
+    itens = ["ID", "Agendamento", "Visita", "Horario", "Empresa", "Contato", "Email", "Vidas", "Congenere", "HotPhone", "Status", "Observacao", "Analista", "Consultora", "Telefone", "Criado Em"]
+    ws.append(itens)
+
+    for row in rows:
+        ws.append(row)
+
+    for col in ws.columns:
+        ws.column_dimensions[col[0].column_letter].width = 15
+
+    formatar_planilha(ws)
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return StreamingResponse(
+       output,
+       media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+       headers={"content-disposition": "attatchment; filename=agendamentos.xlsx"})
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=80)
