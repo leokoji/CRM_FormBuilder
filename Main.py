@@ -20,106 +20,167 @@ html = """
             padding: 5px;
             margin-bottom: 10px;
         }
+
+        body{
+            background: #f2f4f6;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 20px;
+            color: #2c3e50;
+            align-items: flex;
+        }
+
+        header{
+            background: #2c3e50;
+            color: #ffff;
+            padding: 14px 24px;
+            display:flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-radius: 10px;
+        }
+
+        header h1{
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .container{
+            max-width: 600px
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .card{
+            background: #fff;
+            border-radius: 6px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,1);
+        }
+
+        button.acao{
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.acao:hover{
+            background: #2980b9;
+        }
+
+        label{
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        input, textarea, select{
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccd1d9;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
-    <form action="/enviar" method="post">
-    <div>
-    <label for="empresa">Empresa</label>
-    <input name="empresa" type="text" id="empresa" required>
-    <br><br>
-    </div>
 
-    <div>
-    <label for="vidas">Vidas</label>
-    <input name="vidas" type="number" id="vidas" required>
-    <br><br>
-    </div>
+    <header>
+        <h1>CRM FORMBUILDER</h1>
+    </header>
 
-    <div>
-    <label for="status">Status</label>
-    <select name="status" id="status" required>
-        <option value="Agendado">Agendado</option>
-        <option value="Realizado">Realizado</option>
-    </select>
-    <br><br>
-    </div>
+    <div class="container">
+        <div class="card">
+            <form action="/enviar" method="post">
+            <div>
+                <label for="empresa">Empresa</label>
+                <input name="empresa" type="text" id="empresa" required>
+            </div>
 
-    <div>
-    <label for="obs">Observação</label>
-    <textarea name="observacao" id="obs" rows="3"></textarea>
-    <br><br>
-    </div>
+            <div>
+                <label for="vidas">Vidas</label>
+                <input name="vidas" type="number" id="vidas" required>
+            </div>
 
-    <div>
-    <label for="contato">Contato</label>
-    <input name="contato" type="text" id="contato" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="status">Status</label>
+                <select name="status" id="status" required>
+                    <option value="Agendado">Agendado</option>
+                    <option value="Realizado">Realizado</option>
+            </select>
+            </div>
 
-    <div>
-    <label for="telefone">Telefone</label>
-    <input name="telefone" type="tel" id="telefone" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="obs">Observação</label>
+                <textarea name="observacao" id="obs" rows="3"></textarea>
+            </div>
 
-    <div>
-    <label for="email">Email</label>
-    <input name="email" type="email" id="email" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="contato">Contato</label>
+                <input name="contato" type="text" id="contato" required>
+            </div>
 
-    <div>
-    <label for="consultora">Consultora</label>
-    <input name="consultora" type="text" id="consultora" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="telefone">Telefone</label>
+                <input name="telefone" type="tel" id="telefone" required>
+            </div>
 
-    <div>
-    <label for="analista">Analista</label>
-    <input name="analista" type="text" id="analista" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="email">Email</label>
+                <input name="email" type="email" id="email" required>
+            </div>
 
-    <div>
-    <label for="congenere">Congenere</label>
-    <input name="congenere" type="text" id="congenere" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="consultora">Consultora</label>
+                <input name="consultora" type="text" id="consultora" required>
+            </div>
 
-    <div>
-    <label for="hotphone">HotPhone</label>
-    <select name="hotphone" id="hotphone" required>
-        <option value="Sim">Sim</option>
-        <option value="Nao">Não</option>
-    </select>
-    <br><br>
-    </div>
+            <div>
+                <label for="analista">Analista</label>
+                <input name="analista" type="text" id="analista" required>
+            </div>
 
-    <div>
-    <label for="agendamento">Data De Agendamento</label>
-    <input name="agendamento" type="date" id="agendamento" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="congenere">Congenere</label>
+                <input name="congenere" type="text" id="congenere" required>
+            </div>
 
-    <div>
-    <label for="visita">Data De Visita</label>
-    <input name="visita" type="date" id="visita" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="hotphone">HotPhone</label>
+                <select name="hotphone" id="hotphone" required>
+                    <option value="Sim">Sim</option>
+                    <option value="Nao">Não</option>
+            </select>
+            </div>
 
-    <div>
-    <label for="horario">Horario da visita</label>
-    <input name="horario" type="time" id="horario" required>
-    <br><br>
-    </div>
+            <div>
+                <label for="agendamento">Data De Agendamento</label>
+                <input name="agendamento" type="date" id="agendamento" required>
+            </div>
 
-    <div>
-    <button type="submit">Enviar</button>
-    <a href="/exportar"><button type="button">Exportar Excel</button></a>
-    </div>
+            <div>
+                <label for="visita">Data De Visita</label>
+                <input name="visita" type="date" id="visita" required>
+            </div>
 
-</form>
+            <div>
+                <label for="horario">Horario da visita</label>
+                <input name="horario" type="time" id="horario" required>
+            </div>
+
+
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button type="submit" class="acao">Enviar</button>
+                <a href="/exportar"><button type="button" class="acao">Exportar Excel</button></a>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
 """
