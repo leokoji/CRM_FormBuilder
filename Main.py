@@ -205,6 +205,12 @@ conn.execute("""CREATE TABLE IF NOT EXISTS agendamentos (
              telefone TEXT,
              criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 
+conn.execute("""CREATE TABLE IF NOT EXISTS usuario (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             nome TEXT,
+             senha TEXT
+             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+
 app = FastAPI()
 
 
@@ -247,8 +253,12 @@ def formatar_planilha(ws):
                     cell.number_format = "DD/MM/YYYY"
                 except (ValueError, TypeError):
                     pass
+@app.get("/Login")
+def login(nome: str = Form(...), senha: str = Form(...)):
+    conn = sqlite3.connect("Leads.db")
+    return HTMLResponse(content=html)
 
-@app.get("/")
+@app.get("/Form")
 def main():
     return HTMLResponse(content=html)
 
@@ -327,4 +337,4 @@ def exportar():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
