@@ -78,6 +78,42 @@ html = """
             font-weight: bold;
         }
 
+        
+        button.login{
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button.login:hover{
+            background: #2980b9;
+        }
+
+
+        .input-login{
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .card-login{
+            max-width: 400px;
+            background: #fff;
+            border-radius: 6px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,1);
+            }
+        
+        .container-login{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            }
+
         input, textarea, select{
             width: 100%;
             padding: 8px;
@@ -90,98 +126,169 @@ html = """
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>CRM FORMBUILDER</h1>
-    </header>
-
-    <div class="container">
-        <div class="card">
-            <form action="/enviar" method="post">
-            <div>
-                <label for="empresa">Empresa</label>
-                <input name="empresa" type="text" id="empresa" required>
-            </div>
-
-            <div>
-                <label for="vidas">Vidas</label>
-                <input name="vidas" type="number" id="vidas" required>
-            </div>
-
-            <div>
-                <label for="status">Status</label>
-                <select name="status" id="status" required>
-                    <option value="Agendado">Agendado</option>
-                    <option value="Realizado">Realizado</option>
-            </select>
-            </div>
-
-            <div>
-                <label for="obs">Observação</label>
-                <textarea name="observacao" id="obs" rows="3"></textarea>
-            </div>
-
-            <div>
-                <label for="contato">Contato</label>
-                <input name="contato" type="text" id="contato" required>
-            </div>
-
-            <div>
-                <label for="telefone">Telefone</label>
-                <input name="telefone" type="tel" id="telefone" required>
-            </div>
-
-            <div>
-                <label for="email">Email</label>
-                <input name="email" type="email" id="email" required>
-            </div>
-
-            <div>
-                <label for="consultora">Consultora</label>
-                <input name="consultora" type="text" id="consultora" required>
-            </div>
-
-            <div>
-                <label for="analista">Analista</label>
-                <input name="analista" type="text" id="analista" required>
-            </div>
-
-            <div>
-                <label for="congenere">Congenere</label>
-                <input name="congenere" type="text" id="congenere" required>
-            </div>
-
-            <div>
-                <label for="hotphone">HotPhone</label>
-                <select name="hotphone" id="hotphone" required>
-                    <option value="Sim">Sim</option>
-                    <option value="Nao">Não</option>
-            </select>
-            </div>
-
-            <div>
-                <label for="agendamento">Data De Agendamento</label>
-                <input name="agendamento" type="date" id="agendamento" required>
-            </div>
-
-            <div>
-                <label for="visita">Data De Visita</label>
-                <input name="visita" type="date" id="visita" required>
-            </div>
-
-            <div>
-                <label for="horario">Horario da visita</label>
-                <input name="horario" type="time" id="horario" required>
-            </div>
-
-
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="submit" class="acao">Enviar</button>
-                <a href="/exportar"><button type="button" class="acao">Exportar Excel</button></a>
-            </div>
-        </form>
-    </div>
+    <div id="app"></div>
 </body>
+
+<script>
+    let currentUser = null;
+    let page = "register";
+
+    function render(){
+        if (currentUser){
+            document.getElementById("app").innerHTML = `
+                <header>
+                    <h1>CRM FORMBUILDER</h1>
+                </header>
+
+            <div class="container">
+                <div class="card">
+                    <form action="/enviar" method="post">
+                    <div>
+                        <label for="empresa">Empresa</label>
+                        <input name="empresa" type="text" id="empresa" required>
+                    </div>
+
+                    <div>
+                        <label for="vidas">Vidas</label>
+                        <input name="vidas" type="number" id="vidas" required>
+                    </div>
+
+                    <div>
+                        <label for="status">Status</label>
+                        <select name="status" id="status" required>
+                            <option value="Agendado">Agendado</option>
+                            <option value="Realizado">Realizado</option>
+                    </select>
+                    </div>
+
+                    <div>
+                        <label for="obs">Observação</label>
+                        <textarea name="observacao" id="obs" rows="3"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="contato">Contato</label>
+                        <input name="contato" type="text" id="contato" required>
+                    </div>
+
+                    <div>
+                        <label for="telefone">Telefone</label>
+                        <input name="telefone" type="tel" id="telefone" required>
+                    </div>
+
+                    <div>
+                        <label for="email">Email</label>
+                        <input name="email" type="email" id="email" required>
+                    </div>
+
+                    <div>
+                        <label for="consultora">Consultora</label>
+                        <input name="consultora" type="text" id="consultora" required>
+                    </div>
+
+                    <div>
+                        <label for="analista">Analista</label>
+                        <input name="analista" type="text" id="analista" required>
+                    </div>
+
+                    <div>
+                        <label for="congenere">Congenere</label>
+                        <input name="congenere" type="text" id="congenere" required>
+                    </div>
+
+                    <div>
+                        <label for="hotphone">HotPhone</label>
+                        <select name="hotphone" id="hotphone" required>
+                            <option value="Sim">Sim</option>
+                            <option value="Nao">Não</option>
+                    </select>
+                    </div>
+
+                    <div>
+                        <label for="agendamento">Data De Agendamento</label>
+                        <input name="agendamento" type="date" id="agendamento" required>
+                    </div>
+
+                    <div>
+                        <label for="visita">Data De Visita</label>
+                        <input name="visita" type="date" id="visita" required>
+                    </div>
+
+                    <div>
+                        <label for="horario">Horario da visita</label>
+                        <input name="horario" type="time" id="horario" required>
+                    </div>
+
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="submit" class="acao">Enviar</button>
+                        <a href="/exportar"><button type="button" class="acao">Exportar Excel</button></a>
+                    </div>
+                </form>
+                </div>
+                </div>
+            </div>`;
+
+        }else if (page == "login"){
+            document.getElementById("app").innerHTML = `
+            <header><h1>LOGIN</h1></header>
+            <div class="container-login">
+                <div class="card-login">
+                  <label for="username">Usuario</label>
+                  <input class="input-login" type="text" id="username" placeholder="Digite o usuario">
+
+                  <label for="password">Senha</label>
+                  <input class="input-login" type="password" id="password" placeholder="Digite a sua senha">    
+
+                  <button class="acao" onclick="login()">Entrar</button>
+
+                  <button class="login" onclick="Registrar()">Registrar</button>
+                  <button class="login" onclick="EsqueciSenha()">Esqueci a senha</button>
+                </div>
+            </div>`;
+
+        }else if (page == "register"){
+            document.getElementById("app").innerHTML = `
+            <header><h1>REGISTRO</h1></header>
+            <div class="container-login">
+                <div class="card-login">
+                  <label for="email">Email</label>
+                  <input class="input-login" type="email" id="email" placeholder="Digite o seu email">
+
+                  <label for="username">Usuario</label>
+                  <input class="input-login" type="text" id="username" placeholder="Digite o usuario">
+
+                  <label for="password">Senha</label>
+                  <input class="input-login" type="password" id="password" placeholder="Digite a sua senha">
+
+                  <label for="confirmPassword">Confirmar Senha</label>
+                  <input class="input-login" type="password" id="confirmPassword" placeholder="Confirme a sua senha">    
+
+                  <button class="login" onclick="Registrar()">Registrar</button>
+                </div>
+            </div>`;
+
+        }else if (page == "forgot"){
+            document.getElementById("app").innerHTML = `
+            <header><h1>ESQUECI A SENHA</h1></header>
+            `;
+            }
+        }
+
+        function mostrarRegistro(){
+            page = "register";
+            render();}
+        
+       function mostrarLogin(){
+            page = "login";
+            render();}
+
+        function mostrarEsqueciSenha(){
+            page = "forgot";
+            render();
+        }
+        render();
+    </script>
 </html>
 """
 
