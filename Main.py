@@ -6,6 +6,8 @@ from io import BytesIO
 from fastapi.responses import StreamingResponse
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, numbers
+from fastapi import FastAPI, Request, Form, HTTPException
+
 
 html = """
 <!DOCTYPE html>
@@ -89,6 +91,10 @@ html = """
             font-size: 14px;
         }
 
+        button.login:hover{
+            background: #2980b9;
+        }
+
 
         .input-login{
             width: 100%;
@@ -127,6 +133,41 @@ html = """
 
 <script>
     let currentUser = null;
+    let page = 'login'
+
+    async function login(){
+        let usuario = content.getElementById('username').values;
+        let senha = content.getElementById('senha').values;
+
+        let fd = new FormData();
+        fd.append('usuario',usuario);
+        fd.append('senha',senha);
+
+        let respsota = await fetch('/login', {method: 'POST', body: fd})
+
+        if (resposta.ok){
+            let dados = await resposta.json();
+            currentUser = dados;
+            render();
+        } else{
+            document.getElementById('erro-login').innerText = 'usuario ou senha invalidos';
+        }
+    }
+
+    function mostrarRegistro(){
+        page = 'registro';
+        render();
+    }
+
+    function mostrarLogin(){
+        page = 'login';
+        render();
+    }
+
+    function esquecisenha(){
+        page = 'esquecisenha';
+        render();
+    }
 
     function render(){
         if (currentUser){
@@ -137,7 +178,7 @@ html = """
 
     <div class="container">
         <div class="card">
-            <form action="/enviar" method="post">
+            <form action="/enviar_lead" method="post">
             <div>
                 <label for="empresa">Empresa</label>
                 <input name="empresa" type="text" id="empresa" required>
@@ -235,8 +276,7 @@ html = """
                   <label for="password">Senha</label>
                   <input class="input-login" type="password" id="password" placeholder="Digite a sua senha">    
 
-                  <button class="acao" onclick="login()">Entrar</button>
-
+                  <button class="login" onclick="login()">Entrar</button>
                   <button class="login" onclick="Registrar()">Registrar</button>
                   <button class="login" onclick="EsqueciSenha()">Esqueci a senha</button>
                 </div>
@@ -266,6 +306,12 @@ conn.execute("""CREATE TABLE IF NOT EXISTS agendamentos (
              analista TEXT, 
              consultora TEXT,
              telefone TEXT,
+             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+
+conn.execute("""CREATE TABLE IF NOT EXISTS usuarios (
+             id INTEGER PRIMARY KEY AUTOINCREMENT, 
+             usuario TEXT, 
+             senha TEXT, 
              criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 
 app = FastAPI()
@@ -315,8 +361,26 @@ def formatar_planilha(ws):
 def main():
     return HTMLResponse(content=html)
 
-@app.post("/enviar")
-def receber_dados(
+@app.post("/enviar_usuario")
+def receber_dados_usuario(
+    usuario: str = Form(...),
+    senha: str = Form(...)):
+
+    conn = sqlite3.connect("Leads.db")
+
+    user = conn.execute("SEELECT * FROM usuarios WHERE usuario=? AND senha=?", (usuario,senha)).fetchone()
+
+    if user:
+            return{"id": user[0], "usuario": user[1]}
+    else:
+        raise HTTPException(status_code=401, detail="Usuario ou senha Invalido")
+
+    conn.close()
+    
+@app.post("/Login")
+
+@app.post("/enviar_lead")
+def receber_dados_lead(
     agendamento: str = Form(...),
     visita: str = Form(...),
     horario: str = Form(...),
@@ -371,7 +435,7 @@ def exportar():
     ws.append(itens)
 
     for row in rows:
-        ws.append(row)
+        ws.append(row) 
 
     for col in ws.columns:
         ws.column_dimensions[col[0].column_letter].width = 15
