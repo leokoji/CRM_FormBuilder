@@ -133,17 +133,42 @@ html = """
 
 <script>
     let currentUser = null;
-    let page = 'login'
+    let page = 'registro'
+
+    async function registrar(){
+        let usuario = document.getElementById('username').value;
+        let senha = document.getElementById('password').value;
+        let confirmarsenha = document.getElementById('confirmarsenha').value;
+        let email = document.getElementById('email').value;
+
+        if (senha != confirmarsenha){
+            document.getElementById('erro-registro').innerText = 'senhas não coincidem';
+            return;
+        }
+
+        let fd = new FormData();
+        fd.append('usuario', usuario);
+        fd.append('senha', senha);
+        fd.append('email', email);
+
+        let resposta = await fetch('/registro', {method: 'POST', body: fd});
+
+        if (resposta.ok){
+            mostrarLogin();
+        }else{
+            document.getElementById('erro-registro').innerText = "erro ao registrar";
+        }
+    }
 
     async function login(){
-        let usuario = content.getElementById('username').values;
-        let senha = content.getElementById('senha').values;
+        let usuario = document.getElementById('username').value;
+        let senha = document.getElementById('password').value;
 
         let fd = new FormData();
         fd.append('usuario',usuario);
         fd.append('senha',senha);
 
-        let respsota = await fetch('/login', {method: 'POST', body: fd})
+        let resposta = await fetch('/login', {method: 'POST', body: fd})
 
         if (resposta.ok){
             let dados = await resposta.json();
@@ -154,7 +179,7 @@ html = """
         }
     }
 
-    function mostrarRegistro(){
+    function Registrar(){
         page = 'registro';
         render();
     }
@@ -164,8 +189,8 @@ html = """
         render();
     }
 
-    function esquecisenha(){
-        page = 'esquecisenha';
+    function EsqueciSenha(){
+        page = 'EsqueciSenha';
         render();
     }
 
@@ -255,7 +280,6 @@ html = """
                 <input name="horario" type="time" id="horario" required>
             </div>
 
-
             <div style="margin-top: 20px; display: flex; gap: 10px;">
                 <button type="submit" class="acao">Enviar</button>
                 <a href="/exportar"><button type="button" class="acao">Exportar Excel</button></a>
@@ -265,6 +289,30 @@ html = """
         </div>
     </div>`;
         }
+
+        else if(page == 'registro'){
+            document.getElementById("app").innerHTML = `
+            <header><h1>REGISTRO</h1></header>
+            <div class="container-login">
+                <div class="card-login">
+                    <label for="username">Usuario</label>
+                    <input class="input-login" type="text" id="username" placeholder="Digite o usuario">
+
+                    <label for="password">Senha</label>
+                    <input class="input-login" type="password" id="password" placeholder="Digite sua senha">
+
+                    <label for="password">Confirme a Senha</label>
+                    <input class="input-login" type="password" id="verifypassword" placeholder="Confirme sua senha">
+
+                    <label for="email">Digite o seu email</label>
+                    <input class="input-login" type="email" id="email" placeholder="Digite o seu email">
+
+                    <button class="login" onclick="registrar()">Registrar</button>
+    
+                </div>
+            </div>`;       
+            }
+        
         else{
             document.getElementById("app").innerHTML = `
             <header><h1>LOGIN</h1></header>
@@ -279,6 +327,8 @@ html = """
                   <button class="login" onclick="login()">Entrar</button>
                   <button class="login" onclick="Registrar()">Registrar</button>
                   <button class="login" onclick="EsqueciSenha()">Esqueci a senha</button>
+                  <div id="erro-login" style="color: red; margin-top: 10px;"></div>
+
                 </div>
             </div>`;
             }
@@ -312,6 +362,7 @@ conn.execute("""CREATE TABLE IF NOT EXISTS usuarios (
              id INTEGER PRIMARY KEY AUTOINCREMENT, 
              usuario TEXT, 
              senha TEXT, 
+             email TEXT,
              criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
 
 app = FastAPI()
@@ -361,23 +412,40 @@ def formatar_planilha(ws):
 def main():
     return HTMLResponse(content=html)
 
-@app.post("/enviar_usuario")
+@app.post("/login")
 def receber_dados_usuario(
     usuario: str = Form(...),
     senha: str = Form(...)):
 
     conn = sqlite3.connect("Leads.db")
 
-    user = conn.execute("SEELECT * FROM usuarios WHERE usuario=? AND senha=?", (usuario,senha)).fetchone()
+    user = conn.execute("SELECT * FROM usuarios WHERE usuario=? AND senha=?", (usuario,senha)).fetchone()
 
     if user:
             return{"id": user[0], "usuario": user[1]}
     else:
         raise HTTPException(status_code=401, detail="Usuario ou senha Invalido")
-
-    conn.close()
+conn.close()
     
-@app.post("/Login")
+@app.post("/registro")
+def registrar(
+    usuario: str = Form(...),
+    senha: str = Form(...),
+    email: str = Form(...)):
+
+    conn = sqlite3.connect("Leads.db")
+
+    conn.execute("""INSERT INTO usuarios (
+                usuario,
+                senha,
+                email)
+                VALUES(?,?,?)""", (usuario,senha,email))
+
+    conn.commit()
+    conn.close()
+    return {"ok": True, "mensagem": "Usuário cadastrado!"}
+
+
 
 @app.post("/enviar_lead")
 def receber_dados_lead(
