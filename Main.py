@@ -1,4 +1,3 @@
-from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 import sqlite3
 from openpyxl import Workbook
@@ -7,6 +6,13 @@ from fastapi.responses import StreamingResponse
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, numbers
 from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.responses import JSONResponse
+from uuid import uuid4
+from datetime import datetime, timedelta
+from fastapi import Cookie
+from fastapi.responses import RedirectResponse
+
+
 
 
 html = """
@@ -302,13 +308,15 @@ html = """
                     <input class="input-login" type="password" id="password" placeholder="Digite sua senha">
 
                     <label for="password">Confirme a Senha</label>
-                    <input class="input-login" type="password" id="verifypassword" placeholder="Confirme sua senha">
+                    <input class="input-login" type="password" id="confirmarsenha" placeholder="Confirme sua senha">
 
                     <label for="email">Digite o seu email</label>
                     <input class="input-login" type="email" id="email" placeholder="Digite o seu email">
 
                     <button class="login" onclick="registrar()">Registrar</button>
-    
+
+                    <div id="erro-registro" style="color: red; margin-top: 10px;"></div>
+
                 </div>
             </div>`;       
             }
@@ -364,6 +372,11 @@ conn.execute("""CREATE TABLE IF NOT EXISTS usuarios (
              senha TEXT, 
              email TEXT,
              criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+
+conn.execute("""CREATE TABLE IF NOT EXISTS sessoes (
+             id TEXT PRIMARY KEY,
+             id_usuario INTEGER,
+             expira_em TIMESTAMP )""")
 
 app = FastAPI()
 
@@ -421,12 +434,56 @@ def receber_dados_usuario(
 
     user = conn.execute("SELECT * FROM usuarios WHERE usuario=? AND senha=?", (usuario,senha)).fetchone()
 
-    if user:
-            return{"id": user[0], "usuario": user[1]}
-    else:
-        raise HTTPException(status_code=401, detail="Usuario ou senha Invalido")
-conn.close()
-    
+    if not user:
+        raise HTTPException(status_code=401)
+
+    sessao_id =str(uuid4())
+    expira = datetime.now() + timedelta(hours=24)
+
+    conn.execute("INSERT INTO sessoes (id, id_usuario, expira_em) VALUES (?,?,?)",(sessao_id, user[0], expira))
+    conn.commit()
+    conn.close()
+
+    resposta = JSONResponse(content={'ok': True, "usuario": user[1]})
+    resposta.set_cookie(
+        key="sessao",
+        value=sessao_id,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=86400
+    )
+    return resposta
+
+@app.get("/dashboard")
+def dashboard(sessao: str = Cookie(None)):
+    if not sessao:
+        return RedirectResponse(url="/login")
+
+    conn = sqlite3.connect("Leads.db")
+    user = conn.execute("""SELECT u.usuario FROM sessoes s
+                           JOIN usuarios u ON u.id = s.id_usuario
+                           WHERE s.id=? AND s.expira_em > ?""", (sessao,datetime.now())).fetchone()
+
+    conn.close()
+
+    if not user:
+        return RedirectResponse(url="/login")
+
+    return HTMLResponse(content=f"<h1> Bem-Vindo, {user[0]}</h1>")
+
+@app.post("/logout")
+def logout(sessao: str = Cookie(None)):
+    if sessao:
+        conn = sqlite3.connect('Leads.db')
+        conn.execute("DELETE FROM sessoes WHERE id=?", (sessao,))
+        conn.commit()
+        conn.close()
+
+    resposta = JSONResponse(content={"ok": True})
+    resposta.delete_cookie("sessao")
+    return resposta
+            
 @app.post("/registro")
 def registrar(
     usuario: str = Form(...),
